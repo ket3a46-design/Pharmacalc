@@ -987,7 +987,7 @@
         <div class="result-stats result-stats-2">
           <div class="stat-item">
             <strong id="para-max-single-out">7.5 mL</strong>
-            <span>Max Single Dose (15 mg/kg)</span>
+            <span>Single Dose (12 mg/kg)</span>
           </div>
           <div class="stat-item">
             <strong id="para-max-daily-out">37.5 mL</strong>
@@ -1222,7 +1222,7 @@
       setTimeout(() => (btn.textContent = 'Copy Dispensing Note'), 1800);
     }
 
-    /* Paracetamol Pediatric Calculator (SFDA Weight-Based: 10-15 mg/kg/dose, max 5 doses/24h, capped at 1000 mg/dose) */
+    /* Paracetamol Pediatric Calculator — SFDA Weight-Based (12 mg/kg standard single dose, up to 5 doses/24h) */
     function setParaStrength(mg, ml) {
       paraMg = mg;
       paraMl = ml;
@@ -1234,30 +1234,28 @@
     }
 
     function calcParacetamol() {
-      const weight = Math.max(1, parseFloat(document.getElementById('para-weight').value) || 12);
+      const weight = Math.max(1, parseFloat(document.getElementById('para-weight').value) || 10);
       const concMgPerMl = paraMg / paraMl;
 
-      // Standard pediatric weight-based dosing: 10 mg/kg (min) to 15 mg/kg (max single), adult single cap 1000 mg
-      const minDoseMg = Math.min(1000, weight * 10);
-      const maxSingleMg = Math.min(1000, weight * 15);
-
-      const minDoseMl = minDoseMg / concMgPerMl;
-      const maxSingleMl = maxSingleMg / concMgPerMl;
-      // SFDA states: Repeat 4-6 hourly up to 5 times/day; Maximum daily dose = 5 x single dose (capped at 4000 mg/day)
-      const maxDailyMg = Math.min(4000, maxSingleMg * 5);
+      // SFDA standard single dose (12 mg/kg, capped at 1000 mg/dose) and max daily dose (5 doses/24h, capped at 4000 mg/day)
+      const singleDoseMg = Math.min(1000, weight * 12);
+      const singleDoseMl = singleDoseMg / concMgPerMl;
+      const maxDailyMg = Math.min(4000, singleDoseMg * 5);
       const maxDailyMl = maxDailyMg / concMgPerMl;
 
-      document.getElementById('para-mg-sub').textContent = `${Math.round(minDoseMg)}–${Math.round(maxSingleMg)} mg/dose • ${paraMg} mg/${paraMl} mL`;
-      document.getElementById('para-single-out').textContent = `${minDoseMl.toFixed(1)}–${maxSingleMl.toFixed(1)} mL`;
-      document.getElementById('para-max-single-out').textContent = `${maxSingleMl.toFixed(1)} mL`;
-      document.getElementById('para-max-daily-out').textContent = `${maxDailyMl.toFixed(1)} mL`;
+      const fmtMl = (val) => (Number.isInteger(Math.round(val * 10) / 10) ? Math.round(val).toString() : val.toFixed(1));
+
+      document.getElementById('para-mg-sub').textContent = `${Math.round(singleDoseMg)} mg/dose • ${paraMg} mg/${paraMl} mL`;
+      document.getElementById('para-single-out').textContent = `${fmtMl(singleDoseMl)} mL`;
+      document.getElementById('para-max-single-out').textContent = `${fmtMl(singleDoseMl)} mL`;
+      document.getElementById('para-max-daily-out').textContent = `${fmtMl(maxDailyMl)} mL`;
     }
 
     function copyParaNote() {
       const weight = document.getElementById('para-weight').value;
-      const singleRange = document.getElementById('para-single-out').textContent;
+      const singleDose = document.getElementById('para-single-out').textContent;
       const maxDaily = document.getElementById('para-max-daily-out').textContent;
-      const note = `Paracetamol (${paraMg} mg/${paraMl} mL) for ${weight} kg child: Give ${singleRange} every 4–6 hours as needed (Max 5 doses/24h; Max daily: ${maxDaily}). Use provided measuring syringe/cup only.`;
+      const note = `Paracetamol (${paraMg} mg/${paraMl} mL) for ${weight} kg child: ${singleDose} every 4–6 hours up to 5 times/24h (Max daily: ${maxDaily}). Use provided measuring device only.`;
       navigator.clipboard?.writeText(note);
       const btn = document.getElementById('para-copy-btn');
       btn.textContent = 'Copied to Clipboard ✓';
